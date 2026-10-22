@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Carlos Pereira · Galeria</title>
+  <meta name="claude:viewport-fit-sides" content="cover">
+  <meta name="description" content="Galeria de pintura sobre tela de Carlos Pereira: mar, poentes, desertos, ruelas caiadas e rostos.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap" rel="stylesheet">
+  <style>
+    /* Layout: parede de galeria — cabeçalho alinhado à esquerda, grelha regular de "nichos" com etiqueta de museu por baixo */
+    :root {
+      --bg: #f7f7f5;
+      --wall: #ebebe8;
+      --fg: #161615;
+      --muted: #6e6e6a;
+      --line: #dcdcd8;
+      --shadow: rgba(20, 20, 18, 0.28);
+      --sans: 'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif;
+      --mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+      --gutter: clamp(16px, 4vw, 56px);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #121212;
+        --wall: #1c1c1b;
+        --fg: #ededea;
+        --muted: #8e8e89;
+        --line: #2b2b29;
+        --shadow: rgba(0, 0, 0, 0.6);
+        color-scheme: dark;
+      }
+    }
+    :root[data-theme="dark"] {
+      --bg: #121212;
+      --wall: #1c1c1b;
+      --fg: #ededea;
+      --muted: #8e8e89;
+      --line: #2b2b29;
+      --shadow: rgba(0, 0, 0, 0.6);
+      color-scheme: dark;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0 0 auto;
+      height: env(safe-area-inset-top, 0px);
+      z-index: 10;
+      background: var(--bg);
+    }
+    .wrap {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding-left: max(var(--gutter), env(safe-area-inset-left, 0px));
+      padding-right: max(var(--gutter), env(safe-area-inset-right, 0px));
+    }
+    button { font: inherit; color: inherit; }
+    :focus-visible { outline: 2px solid var(--fg); outline-offset: 3px; }
+
+    /* ---------- Menu ---------- */
+    .topbar .wrap {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-block: 18px;
+    }
+    .topbar a { color: var(--muted); text-decoration: none; transition: color 0.2s; }
+    .topbar a:hover { color: var(--fg); }
+    .topbar .marca { color: var(--fg); font-weight: 600; letter-spacing: -0.01em; }
+    .topbar .links { display: flex; gap: 24px; font-size: 0.95rem; }
+    .topbar .links a[aria-current="page"] {
+      color: var(--fg);
+      text-decoration: underline;
+      text-underline-offset: 6px;
+      text-decoration-thickness: 1px;
+    }
+
+    /* ---------- Cabeçalho ---------- */
+    header .wrap {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      gap: 32px 64px;
+      align-items: end;
+      padding-block: clamp(48px, 9vw, 120px) clamp(36px, 5vw, 64px);
+    }
+    .kicker {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+    h1 {
+      font-weight: 600;
+      font-size: clamp(3rem, 9vw, 7.5rem);
+      line-height: 0.92;
+      letter-spacing: -0.045em;
+      text-wrap: balance;
+    }
+    .intro {
+      display: grid;
+      gap: 24px;
+      max-width: 44ch;
+    }
+    .intro p { font-size: 1.05rem; }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 28px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+    .meta b { font-weight: 400; color: var(--fg); }
+
+    /* ---------- Filtros ---------- */
+    .filters {
+      position: sticky;
+      top: env(safe-area-inset-top, 0px);
+      z-index: 5;
+      background: color-mix(in srgb, var(--bg) 88%, transparent);
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+      border-block: 1px solid var(--line);
+    }
+    .filters .wrap {
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-block: 10px;
+    }
+    .filters .wrap::-webkit-scrollbar { display: none; }
+    .filters button {
+      flex: none;
+      background: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 7px 14px;
+      font-size: 0.92rem;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color 0.2s, background 0.2s;
+    }
+    .filters button sup {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      margin-left: 3px;
+      font-variant-numeric: tabular-nums;
+    }
+    .filters button:hover { color: var(--fg); }
+    .filters button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
+
+    /* ---------- Grelha ---------- */
+    main .wrap { padding-block: clamp(32px, 5vw, 64px) 96px; }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 56px 28px;
+    }
+    .item { cursor: zoom-in; display: grid; gap: 14px; align-content: start; }
+    .item[hidden] { display: none; }
+    .niche {
+      position: relative;
+      aspect-ratio: 4 / 5;
+      max-width: 100%;
+      background: var(--wall);
+      overflow: hidden;
+    }
+    /* O filtro fica no contentor para a sombra seguir o recorte da máscara */
+    .niche span {
+      position: absolute;
+      inset: 13%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 10px 14px var(--shadow));
+      transition: transform 0.5s cubic-bezier(.2,.7,.2,1);
+    }
+    .item:hover .niche span, .item:focus-visible .niche span { transform: scale(1.04); }
+    .niche img {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+    }
+    /* A fotografia é um JPEG; o recorte (fundo transparente) vem da máscara PNG em --mask */
+    .niche img, .viewer img {
+      -webkit-mask: var(--mask) center / 100% 100% no-repeat;
+      mask: var(--mask) center / 100% 100% no-repeat;
+    }
+    /* Aberto a partir do disco (file://) o browser bloqueia as máscaras e as imagens ficariam em branco */
+    .local .niche img, .local .viewer img { -webkit-mask: none; mask: none; }
+
+    .label { display: grid; gap: 2px; }
+    .label strong { font-weight: 500; font-size: 1rem; line-height: 1.3; }
+    .label small, .sheet dd {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+    .empty { color: var(--muted); padding-block: 40px; }
+
+    /* ---------- Sobre ---------- */
+    .sobre .wrap {
+      display: grid;
+      gap: clamp(56px, 7vw, 96px);
+      padding-block: 8px 96px;
+    }
+    .retrato {
+      display: grid;
+      grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+      gap: 32px clamp(32px, 6vw, 96px);
+      align-items: end;
+    }
+    .retrato img {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      height: auto;
+      aspect-ratio: 1;
+    }
+    .retrato .intro p { font-size: clamp(1.1rem, 1.6vw, 1.3rem); line-height: 1.5; }
+    .percurso {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 24px;
+    }
+    .percurso li { display: grid; gap: 8px; align-content: start; }
+    .percurso b {
+      font-weight: 600;
+      font-size: clamp(1.3rem, 2.2vw, 1.7rem);
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+    .percurso span { color: var(--muted); font-size: 0.95rem; max-width: 26ch; }
+    .factos {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      border-top: 1px solid var(--line);
+    }
+    .factos div {
+      display: grid;
+      gap: 4px;
+      padding: 22px 20px 0 0;
+    }
+    .factos dt {
+      order: 2;
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .factos dd {
+      font-weight: 600;
+      font-size: clamp(1.6rem, 3.4vw, 2.6rem);
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      font-variant-numeric: tabular-nums;
+    }
+    .duas {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 56px 64px;
+    }
+    .sec {
+      font-family: var(--mono);
+      font-weight: 400;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding-bottom: 14px;
+      margin-bottom: 18px;
+      border-bottom: 1px solid var(--line);
+    }
+    .barras { display: grid; gap: 10px; }
+    .barra {
+      display: grid;
+      grid-template-columns: 9.5em minmax(0, 1fr) 2.5em;
+      align-items: center;
+      gap: 14px;
+      font-size: 0.92rem;
+    }
+    .barra i {
+      display: block;
+      height: 8px;
+      background: var(--fg);
+      border-radius: 1px;
+      min-width: 2px;
+    }
+    .barra span:last-child {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+    .nota { color: var(--muted); max-width: 60ch; margin-bottom: 28px; }
+    .escala {
+      --k: 2.6px;   /* píxeis por centímetro de tela */
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 28px 18px;
+      padding: 32px;
+      background: var(--wall);
+    }
+    .escala button {
+      background: none;
+      border: 0;
+      padding: 0;
+      cursor: zoom-in;
+      display: grid;
+      gap: 6px;
+      justify-items: center;
+      filter: drop-shadow(0 6px 8px var(--shadow));
+      transition: transform 0.3s ease;
+    }
+    .escala button:hover { transform: translateY(-3px); }
+    .escala img {
+      display: block;
+      max-width: calc(var(--L) * var(--k));
+      max-height: calc(var(--L) * var(--k));
+      -webkit-mask: var(--mask) center / 100% 100% no-repeat;
+      mask: var(--mask) center / 100% 100% no-repeat;
+    }
+    .local .escala img { -webkit-mask: none; mask: none; }
+    .escala small {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* ---------- Visualizador ---------- */
+    .viewer {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: var(--bg);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 360px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s ease, visibility 0.25s;
+    }
+    .viewer.open { opacity: 1; visibility: visible; }
+    .stage {
+      position: relative;
+      background: var(--wall);
+      min-height: 0;
+    }
+    .stage span {
+      position: absolute;
+      inset: max(48px, 7%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 18px 28px var(--shadow));
+    }
+    .viewer img {
+      display: block;
+      max-width: 100%;
+      max-height: 100%;
+      transition: opacity 0.25s ease;
+    }
+    .viewer img.loading { opacity: 0; }
+    .panel {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      padding: calc(28px + env(safe-area-inset-top, 0px)) max(32px, env(safe-area-inset-right, 0px)) calc(28px + env(safe-area-inset-bottom, 0px)) 32px;
+      border-left: 1px solid var(--line);
+      overflow-y: auto;
+    }
+    .panel-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+    .panel h2 {
+      font-weight: 600;
+      font-size: clamp(1.8rem, 3vw, 2.4rem);
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+      text-wrap: balance;
+    }
+    .sheet {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px 24px;
+      padding-block: 18px;
+      border-block: 1px solid var(--line);
+    }
+    .sheet dt { font-size: 0.85rem; color: var(--muted); }
+    .sheet dd { font-size: 0.85rem; color: var(--fg); }
+    .panel p { color: var(--muted); max-width: 40ch; }
+    .nav { display: flex; gap: 8px; margin-top: auto; }
+    .btn {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: none;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .btn:hover { border-color: var(--fg); }
+    .btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+    .btn-close { border: 0; width: 36px; height: 36px; }
+
+    /* ---------- Rodapé ---------- */
+    footer .wrap {
+      padding-block: 28px 40px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 8px 24px;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 860px) {
+      header .wrap { grid-template-columns: 1fr; }
+      .viewer { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; }
+      .stage span { inset: calc(56px + env(safe-area-inset-top, 0px)) 20px 20px; }
+      .panel { border-left: 0; border-top: 1px solid var(--line); gap: 16px; max-height: 48vh;
+               padding: 20px max(20px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px)); }
+      .panel-top { position: absolute; top: calc(10px + env(safe-area-inset-top, 0px)); left: 20px; right: 12px; }
+      .nav { margin-top: 0; }
+    }
+    @media (max-width: 860px) {
+      .retrato { grid-template-columns: 1fr; }
+      .percurso { grid-template-columns: 1fr; gap: 14px; }
+      .percurso li { grid-template-columns: 7.5em minmax(0, 1fr); align-items: baseline; }
+      .percurso b { font-size: 1.15rem; }
+      .factos { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 24px; }
+      .duas { grid-template-columns: 1fr; }
+      .escala { --k: 1.5px; padding: 20px; gap: 20px 12px; }
+    }
+    @media (max-width: 560px) {
+      .gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 12px; }
+      .label strong { font-size: 0.9rem; }
+      .label small { font-size: 0.68rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="topbar" aria-label="Secções">
+    <div class="wrap">
+      <a class="marca" href="#obras">C. Pereira</a>
+      <div class="links">
+        <a href="#obras" data-vista="obras">Obras</a>
+        <a href="#sobre" data-vista="sobre">Sobre</a>
+      </div>
+    </div>
+  </nav>
+
+  <div id="vista-obras">
+  <header>
+    <div class="wrap">
+      <div>
+        <p class="kicker">Galeria · Pintura sobre tela</p>
+        <h1>Carlos Pereira</h1>
+      </div>
+      <div class="intro">
+        <p>Mar, poentes, desertos, ruelas caiadas e rostos que se fundem com a paisagem. Telas assinadas «C. Pereira», pela ordem em que foram pintadas.</p>
+        <div class="meta">
+          <span><b id="stat-obras"></b> obras</span>
+          <span><b id="stat-anos"></b></span>
+          <span>Acrílico e óleo sobre tela</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="filters" aria-label="Filtrar por tema"><div class="wrap" id="filters"></div></nav>
+
+  <main>
+    <div class="wrap">
+      <section class="gallery" id="gallery" aria-live="polite"></section>
+      <p class="empty" id="empty" hidden>Não há obras neste tema.</p>
+    </div>
+  </main>
+  </div>
+
+  <div id="vista-sobre" hidden>
+    <header>
+      <div class="wrap">
+        <div>
+          <p class="kicker">Sobre o pintor</p>
+          <h1>Sobre</h1>
+        </div>
+      </div>
+    </header>
+
+    <main class="sobre">
+      <div class="wrap">
+        <div class="retrato">
+          <img src="imagens/carlos-pereira.jpg" alt="Retrato de Carlos Pereira" width="900" height="900">
+          <div class="intro">
+            <p>Carlos Pereira nasceu em Luanda, em 1952. É ex-combatente da Guerra do Ultramar e vive em Portugal desde 1975. Entre 2008 e 2012 viveu no Brasil. Hoje mora em Faro. É casado e tem três filhos.</p>
+            <p id="sobre-texto"></p>
+            <div class="meta">
+              <span>Luanda, <b>1952</b></span>
+              <span>Vive em <b>Faro</b></span>
+            </div>
+          </div>
+        </div>
+
+        <section>
+          <h2 class="sec">Percurso</h2>
+          <ol class="percurso">
+            <li><b>1952</b><span>Nasce em Luanda, Angola.</span></li>
+            <li><b>1975</b><span>Passa a viver em Portugal.</span></li>
+            <li><b>2002</b><span>Pinta «Ruela caiada», a tela mais antiga desta galeria.</span></li>
+            <li><b>2008–2012</b><span>Vive no Brasil.</span></li>
+            <li><b>Hoje</b><span>Vive e pinta em Faro.</span></li>
+          </ol>
+        </section>
+
+        <dl class="factos" id="factos"></dl>
+
+        <div class="duas">
+          <section>
+            <h2 class="sec">Por tema</h2>
+            <div class="barras" id="por-tema"></div>
+          </section>
+          <section>
+            <h2 class="sec">Por ano</h2>
+            <div class="barras" id="por-ano"></div>
+          </section>
+        </div>
+
+        <section>
+          <h2 class="sec">As telas à escala</h2>
+          <p class="nota">Todas as obras desenhadas na mesma proporção entre si, da mais pequena à maior. Clique numa para a ver em grande.</p>
+          <div class="escala" id="escala"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <footer>
+    <div class="wrap">
+      <span>C. Pereira</span>
+      <span>Datas segundo a assinatura de cada tela · Medidas em centímetros</span>
+    </div>
+  </footer>
+
+  <div class="viewer" id="viewer" role="dialog" aria-modal="true" aria-labelledby="v-titulo">
+    <div class="stage"><span><img id="v-img" alt=""></span></div>
+    <aside class="panel">
+      <div class="panel-top">
+        <span id="v-counter"></span>
+        <button class="btn btn-close" id="v-close" aria-label="Fechar">
+          <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+      <h2 id="v-titulo"></h2>
+      <dl class="sheet" id="v-sheet"></dl>
+      <p id="v-desc"></p>
+      <div class="nav">
+        <button class="btn" id="v-prev" aria-label="Obra anterior">
+          <svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <button class="btn" id="v-next" aria-label="Obra seguinte">
+          <svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    /*
+     * ============================================================
+     *  OBRAS DA GALERIA
+     *  "foto" é o número do PNG sem fundo em
+     *  imagens/Galeria - Carlos Pereira/. A grelha usa imagens/mini/<foto>.jpg
+     *  e o visualizador imagens/web/<foto>.jpg, cada um com a máscara
+     *  <foto>-mask.png que recorta o fundo.
+     *  O ano é o da assinatura na tela (null se não estiver legível).
+     *  As obras são ordenadas pelo ano; as sem data ficam no fim.
+     *  Técnica e medidas (cm) vêm da lista manuscrita do autor.
+     * ============================================================
+     */
+    const obras = [
+      { foto: "25", titulo: "Ruela caiada",             ano: 2002, tema: "Ruelas",         tecnica: "Acrílico", medidas: "40 × 30",  descricao: "Casario branco, muro de pedra e glicínias a caminho da igreja." },
+      { foto: "7",  titulo: "Natureza-morta com vinho", ano: 2003, tema: "Natureza-morta", tecnica: "Acrílico", medidas: "70 × 50",  descricao: "Fruta, decantador e flores sobre a mesa, com um poente emoldurado ao fundo." },
+      { foto: "24", titulo: "Vela amarela",             ano: 2020, tema: "Mar",            tecnica: "Acrílico", medidas: "38 × 47",  descricao: "Um barco à vela encalhado na areia, de frente para a ilha." },
+      { foto: "36", titulo: "Sol do deserto",           ano: 2020, tema: "Desertos",       tecnica: "Acrílico", medidas: "60 × 50",  descricao: "Um cato solitário recortado contra o sol que se põe." },
+      { foto: "13", titulo: "Matéria em fogo",          ano: 2021, tema: "Abstratos",      tecnica: "Acrílico", medidas: "34 × 22",  descricao: "Empastes espessos de vermelho, amarelo e verde." },
+      { foto: "3",  titulo: "Enseada ao pôr do sol",    ano: 2021, tema: "Poentes",        tecnica: "Acrílico", medidas: "81 × 65",  descricao: "O sol desce sobre o mar entre duas arribas escuras." },
+      { foto: "5",  titulo: "Marina",                   ano: 2021, tema: "Mar",            tecnica: "Acrílico", medidas: "46 × 40",  descricao: "Palmeiras, casario e barcos refletidos na água parada da doca." },
+      { foto: "2",  titulo: "Bruma verde",              ano: 2021, tema: "Paisagens",      tecnica: "Óleo",     medidas: "46 × 36",  descricao: "Arvoredo e caminho desfeitos numa névoa verde-água." },
+      { foto: "1",  titulo: "Saguaros",                 ano: 2021, tema: "Desertos",       tecnica: "Acrílico", medidas: "60 × 50",  descricao: "Catos em silhueta sob um céu de nuvens e ouro." },
+      { foto: "37", titulo: "Palmeiras ao poente",      ano: 2021, tema: "Poentes",        tecnica: "Acrílico", medidas: "60 × 50",  descricao: "Palmeiras negras contra um céu laranja que se derrama no mar." },
+      { foto: "8",  titulo: "Árvore em flor",           ano: 2021, tema: "Paisagens",      tecnica: "Acrílico", medidas: "24 × 18",  descricao: "Uma árvore lilás debruçada sobre a falésia." },
+      { foto: "6",  titulo: "Deserto azul",             ano: 2021, tema: "Desertos",       tecnica: "Acrílico", medidas: "24 × 18",  descricao: "Dunas douradas à beira de uma água azul profunda." },
+      { foto: "9",  titulo: "Poente em negro",          ano: 2026, tema: "Poentes",        tecnica: "Acrílico", medidas: "60 × 30",  descricao: "Um sol laranja a escorrer sobre a tela negra." },
+      { foto: "10", titulo: "Ilha ao poente",           ano: 2026, tema: "Poentes",        tecnica: "Acrílico", medidas: "60 × 30",  descricao: "Uma ilha de palmeiras dentro do disco do sol, refletida no mar escuro." },
+      { foto: "11", titulo: "Crepúsculo violeta",       ano: 2026, tema: "Poentes",        tecnica: "Acrílico", medidas: "60 × 40",  descricao: "Céu violeta, silhuetas em chama e o último sol sobre a água." },
+      { foto: "12", titulo: "Cascata dourada",          ano: 2026, tema: "Paisagens",      tecnica: "Acrílico", medidas: "35 × 27",  descricao: "Floresta e queda de água em ouro sob a lua cheia." },
+      { foto: "14", titulo: "Dama de chapéu",           ano: 2026, tema: "Rostos",         tecnica: "Acrílico", medidas: "40 × 30",  descricao: "Perfil feminino em traço dourado sobre fundo negro." },
+      { foto: "15", titulo: "Constelação de cor",       ano: 2026, tema: "Abstratos",      tecnica: "Acrílico", medidas: "42 × 30",  descricao: "Círculos de cor viva espalhados sobre o branco." },
+      { foto: "16", titulo: "Ramos em flor",            ano: 2026, tema: "Abstratos",      tecnica: "Acrílico", medidas: "70 × 50",  descricao: "Um painel de flores atravessado por ramos negros." },
+      { foto: "17", titulo: "Estação",                  ano: 2026, tema: "Cidade",         tecnica: "Acrílico", medidas: "30 × 21",  descricao: "Um comboio vermelho na plataforma, à luz dos candeeiros." },
+      { foto: "18", titulo: "Veleiro na baía",          ano: 2026, tema: "Mar",            tecnica: "Acrílico", medidas: "25 × 25",  descricao: "Um veleiro ancorado diante da vila, com gaivotas ao fim da tarde." },
+      { foto: "19", titulo: "Dama de chapéu II",        ano: 2026, tema: "Rostos",         tecnica: "Acrílico", medidas: "30 × 21",  descricao: "Perfil feminino em dourado, com flor e ramo." },
+      { foto: "4",  titulo: "Ponte sobre o rio",        ano: 2026, tema: "Cidade",         tecnica: "Acrílico", medidas: "30 × 21",  descricao: "A ponte de ferro e as luzes da cidade refletidas no rio." },
+      { foto: "20", titulo: "Flores sobre vermelho",    ano: 2026, tema: "Abstratos",      tecnica: "Acrílico", medidas: "24 × 18",  descricao: "Flores em empaste sobre um fundo vermelho intenso." },
+      { foto: "21", titulo: "Vento de mar",             ano: 2026, tema: "Mar",            tecnica: "Acrílico", medidas: "24 × 18",  descricao: "Uma mulher de vestido vermelho à beira da rebentação." },
+      { foto: "22", titulo: "Flores brancas",           ano: 2026, tema: "Abstratos",      tecnica: "Acrílico", medidas: "30 × 21",  descricao: "Sete flores em empaste sobre tela branca." },
+      { foto: "23", titulo: "Cascata ao luar",          ano: 2026, tema: "Paisagens",      tecnica: "Acrílico", medidas: "30 × 21",  descricao: "Duas quedas de água entre as árvores, numa noite de lua cheia." },
+      { foto: "26", titulo: "Cidade refletida",         ano: 2026, tema: "Abstratos",      tecnica: "Acrílico", medidas: "60 × 40",  descricao: "Planos de azul e cor que se espelham como uma cidade na água." },
+      { foto: "27", titulo: "Vestido amarelo",          ano: 2026, tema: "Mar",            tecnica: "Acrílico", medidas: "50 × 40",  descricao: "Uma figura de amarelo, uma árvore seca e o sol sobre as ondas." },
+      { foto: "28", titulo: "Barco ao entardecer",      ano: 2026, tema: "Mar",            tecnica: "Acrílico", medidas: "90 × 60",  descricao: "Um barco de madeira visto de cima, a caminho do sol." },
+      { foto: "29", titulo: "Elétrico amarelo",         ano: 2026, tema: "Cidade",         tecnica: "Acrílico", medidas: "100 × 80", descricao: "O elétrico a descer a rua, em pinceladas soltas de cor." },
+      { foto: "30", titulo: "Clareira",                 ano: 2026, tema: "Paisagens",      tecnica: "Acrílico", medidas: "60 × 70",  descricao: "Arvoredo denso a abrir-se sobre os campos." },
+      { foto: "31", titulo: "Grande cascata",           ano: 2026, tema: "Paisagens",      tecnica: "Acrílico", medidas: "70 × 50",  descricao: "Uma queda de água larga entre rochas e vegetação." },
+      { foto: "32", titulo: "Rio ao poente",            ano: 2026, tema: "Poentes",        tecnica: "Acrílico", medidas: "40 × 30",  descricao: "Um rio rosado entre árvores negras, sob um céu em brasa." },
+      { foto: "33", titulo: "Rosto da paisagem",        ano: 2026, tema: "Rostos",         tecnica: "Acrílico", medidas: "50 × 40",  descricao: "Um rosto de mulher que se funde com montanhas, mar e poente." },
+      { foto: "34", titulo: "Veleiros ao poente",       ano: 2026, tema: "Mar",            tecnica: "Acrílico", medidas: "50 × 40",  descricao: "Veleiros sobre um mar azul incendiado pelo sol." },
+      { foto: "35", titulo: "Mulher-árvore",            ano: 2026, tema: "Rostos",         tecnica: "Acrílico", medidas: "55 × 48",  descricao: "Um rosto de chapéu feito de ramos secos e rocha." },
+      // Obras novas
+      { foto: "39", titulo: "Natureza-morta cubista",   ano: 2003, tema: "Natureza-morta", tecnica: "Acrílico", medidas: "55 × 48",  descricao: "Garrafa, uvas e fruta decompostas em planos de cor sobre fundo azul." },
+      { foto: "38", titulo: "Dama da rosa",             ano: 2020, tema: "Rostos",         tecnica: "Acrílico", medidas: "30 × 21",  descricao: "Um chapéu negro com uma rosa vermelha esconde o olhar; só os lábios ficam à luz." },
+      { foto: "48", titulo: "Caminho da água",          ano: 2020, tema: "Poentes",        tecnica: "Acrílico", medidas: "24 × 18",  descricao: "Mãe e filho em silhueta junto a uma acácia, contra o céu da savana." },
+      { foto: "50", titulo: "Chapéu vermelho",          ano: 2020, tema: "Rostos",         tecnica: "Acrílico", medidas: "30 × 21",  descricao: "Lábios vermelhos sob um chapéu largo, sobre riscas a preto e branco." },
+      { foto: "49", titulo: "Turbilhão",                ano: 2021, tema: "Abstratos",      tecnica: "Acrílico", medidas: "60 × 35",  descricao: "Pinceladas de verde, coral e ouro atravessadas por traços negros." },
+      { foto: "44", titulo: "Maré baixa",               ano: 2022, tema: "Mar",            tecnica: "Óleo",     medidas: "34 × 24",  descricao: "Areal e rochas à vista sob um céu de bruma." },
+      { foto: "45", titulo: "Veleiro no areal",         ano: 2022, tema: "Mar",            tecnica: "Óleo",     medidas: "34 × 24",  descricao: "Um pequeno veleiro pousado na areia, num dia de céu velado." },
+      { foto: "46", titulo: "Fim de tarde na praia",    ano: 2022, tema: "Poentes",        tecnica: "Óleo",     medidas: "34 × 24",  descricao: "Céu laranja sobre a baía e três figuras à beira-mar." },
+      { foto: "40", titulo: "O farol",                  ano: 2026, tema: "Mar",            tecnica: "Acrílico", medidas: "60 × 40",  descricao: "Barcos varados na praia diante do farol listado de vermelho." },
+      { foto: "41", titulo: "Cascata na floresta",      ano: 2026, tema: "Paisagens",      tecnica: "Acrílico", medidas: "60 × 40",  descricao: "Uma queda de água num lago verde, entre árvores de flor amarela." },
+      { foto: "42", titulo: "Jardim de outono",         ano: 2026, tema: "Paisagens",      tecnica: "Acrílico", medidas: "60 × 40",  descricao: "Uma alameda molhada, candeeiros acesos e árvores em tons de laranja." },
+      { foto: "43", titulo: "Cavalos em liberdade",     ano: 2026, tema: "Paisagens",      tecnica: "Acrílico", medidas: "70 × 50",  descricao: "Dois cavalos a galope junto ao rio, sob montanhas nevadas e céu em brasa." },
+      { foto: "47", titulo: "Bosque",                   ano: null, tema: "Paisagens",      tecnica: "Óleo",     medidas: "30 × 24",  descricao: "Árvores escuras e bétulas claras à volta de uma clareira." }
+    ].sort((a, b) => (a.ano ?? 9999) - (b.ano ?? 9999));
+
+    const anoTexto = o => o.ano ?? 's/ data';
+
+    const TEMAS = ["Mar", "Poentes", "Desertos", "Ruelas", "Rostos", "Paisagens", "Cidade", "Abstratos", "Natureza-morta"];
+
+    const gallery = document.getElementById('gallery');
+    const filtersEl = document.getElementById('filters');
+    const emptyEl = document.getElementById('empty');
+    const viewer = document.getElementById('viewer');
+    const vImg = document.getElementById('v-img');
+
+    let visiveis = [];   // índices das obras visíveis no filtro atual
+    let atual = 0;       // posição dentro de "visiveis"
+    let ultimoFoco = null;
+
+    // ---------- Cabeçalho ----------
+    function renderStats() {
+      const anos = obras.map(o => o.ano).filter(Boolean);
+      const min = Math.min(...anos), max = Math.max(...anos);
+      document.getElementById('stat-obras').textContent = obras.length;
+      document.getElementById('stat-anos').textContent = min === max ? min : `${min}—${max}`;
+    }
+
+    // ---------- Grelha ----------
+    function renderGaleria() {
+      gallery.innerHTML = obras.map((o, i) => `
+        <figure class="item" tabindex="0" data-index="${i}" data-tema="${o.tema}" aria-label="${o.titulo}, ${anoTexto(o)}">
+          <div class="niche"><span>
+            <img src="imagens/mini/${o.foto}.jpg" style="--mask:url('imagens/mini/${o.foto}-mask.png')" alt="${o.titulo}" loading="lazy">
+          </span></div>
+          <figcaption class="label">
+            <strong>${o.titulo}</strong>
+            <small>${anoTexto(o)} · ${o.tecnica} · ${o.medidas} cm</small>
+          </figcaption>
+        </figure>`).join('');
+    }
+
+    // ---------- Filtros ----------
+    function renderFiltros() {
+      const conta = {};
+      obras.forEach(o => { conta[o.tema] = (conta[o.tema] || 0) + 1; });
+      const temas = ['Todos', ...TEMAS.filter(t => conta[t])];
+      filtersEl.innerHTML = temas.map((t, i) =>
+        `<button type="button" data-filtro="${t}" aria-pressed="${i === 0}">${t}<sup>${t === 'Todos' ? obras.length : conta[t]}</sup></button>`
+      ).join('');
+    }
+
+    function aplicarFiltro(filtro) {
+      filtersEl.querySelectorAll('button').forEach(b =>
+        b.setAttribute('aria-pressed', b.dataset.filtro === filtro));
+      visiveis = [];
+      gallery.querySelectorAll('.item').forEach(el => {
+        const mostrar = filtro === 'Todos' || el.dataset.tema === filtro;
+        el.hidden = !mostrar;
+        if (mostrar) visiveis.push(Number(el.dataset.index));
+      });
+      emptyEl.hidden = visiveis.length > 0;
+    }
+
+    filtersEl.addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (btn) aplicarFiltro(btn.dataset.filtro);
+    });
+
+    // ---------- Visualizador ----------
+    function mostrar(pos) {
+      atual = (pos + visiveis.length) % visiveis.length;
+      const o = obras[visiveis[atual]];
+      vImg.classList.add('loading');
+      vImg.onload = () => vImg.classList.remove('loading');
+      vImg.style.setProperty('--mask', `url('imagens/web/${o.foto}-mask.png')`);
+      vImg.src = `imagens/web/${o.foto}.jpg`;
+      vImg.alt = o.titulo;
+      // Tabela da obra: ano, técnica, dimensões e tema
+      document.getElementById('v-titulo').textContent = o.titulo;
+      document.getElementById('v-sheet').innerHTML = `
+        <dt>Ano</dt><dd>${anoTexto(o)}</dd>
+        <dt>Técnica</dt><dd>${o.tecnica} sobre tela</dd>
+        <dt>Dimensões</dt><dd>${o.medidas} cm</dd>
+        <dt>Tema</dt><dd>${o.tema}</dd>`;
+      document.getElementById('v-desc').textContent = o.descricao || '';
+      document.getElementById('v-counter').textContent =
+        `${String(atual + 1).padStart(2, '0')} / ${String(visiveis.length).padStart(2, '0')}`;
+    }
+
+    function abrir(indiceObra) {
+      ultimoFoco = document.activeElement;
+      if (!visiveis.includes(indiceObra)) aplicarFiltro('Todos');
+      mostrar(visiveis.indexOf(indiceObra));
+      viewer.classList.add('open');
+      document.body.style.overflow = 'hidden';
+      document.getElementById('v-close').focus();
+    }
+
+    function fechar() {
+      viewer.classList.remove('open');
+      document.body.style.overflow = '';
+      if (ultimoFoco) ultimoFoco.focus();
+    }
+
+    gallery.addEventListener('click', e => {
+      const item = e.target.closest('.item');
+      if (item) abrir(Number(item.dataset.index));
+    });
+    gallery.addEventListener('keydown', e => {
+      const item = e.target.closest('.item');
+      if (item && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        abrir(Number(item.dataset.index));
+      }
+    });
+
+    document.getElementById('v-close').addEventListener('click', fechar);
+    document.getElementById('v-prev').addEventListener('click', () => mostrar(atual - 1));
+    document.getElementById('v-next').addEventListener('click', () => mostrar(atual + 1));
+
+    document.addEventListener('keydown', e => {
+      if (!viewer.classList.contains('open')) return;
+      if (e.key === 'Escape') fechar();
+      if (e.key === 'ArrowLeft') mostrar(atual - 1);
+      if (e.key === 'ArrowRight') mostrar(atual + 1);
+    });
+
+    // Deslizar no telemóvel
+    let toqueX = null;
+    viewer.addEventListener('touchstart', e => { toqueX = e.touches[0].clientX; }, { passive: true });
+    viewer.addEventListener('touchend', e => {
+      if (toqueX === null) return;
+      const dx = e.changedTouches[0].clientX - toqueX;
+      if (Math.abs(dx) > 50) mostrar(atual + (dx < 0 ? 1 : -1));
+      toqueX = null;
+    });
+
+    // ---------- Sobre ----------
+    const contar = chave => obras.reduce((m, o) => (m[chave(o)] = (m[chave(o)] || 0) + 1, m), {});
+    const lados = o => o.medidas.split('×').map(Number);
+    const area = o => lados(o)[0] * lados(o)[1];
+
+    function barras(pares) {
+      const max = Math.max(...pares.map(p => p[1]));
+      return pares.map(([nome, n]) => `
+        <div class="barra"><span>${nome}</span><i style="width:${n / max * 100}%"></i><span>${n}</span></div>`).join('');
+    }
+
+    function renderSobre() {
+      const tec = contar(o => o.tecnica);
+      const anos = obras.map(o => o.ano).filter(Boolean);
+      const porArea = [...obras].sort((a, b) => area(a) - area(b));
+      const maior = porArea[porArea.length - 1], menor = porArea[0];
+
+      document.getElementById('sobre-texto').textContent =
+        `Pinta sobre tela, sobretudo a acrílico. As ${obras.length} obras desta galeria vão de ` +
+        `${Math.min(...anos)} a ${Math.max(...anos)} e passam pelo mar, pelos poentes, pelos desertos, pela cidade ` +
+        `e por rostos que se fundem com a paisagem. Todas vêm assinadas «C. Pereira».`;
+
+      document.getElementById('factos').innerHTML = [
+        [obras.length, 'obras na galeria'],
+        [`${tec['Acrílico'] || 0} / ${tec['Óleo'] || 0}`, 'acrílico / óleo'],
+        [`${maior.medidas}`, `maior tela (cm) · ${maior.titulo}`],
+        [`${menor.medidas}`, `mais pequena (cm) · ${menor.titulo}`]
+      ].map(([v, t]) => `<div><dt>${t}</dt><dd>${v}</dd></div>`).join('');
+
+      const temas = contar(o => o.tema);
+      document.getElementById('por-tema').innerHTML =
+        barras(TEMAS.filter(t => temas[t]).map(t => [t, temas[t]]).sort((a, b) => b[1] - a[1]));
+
+      const porAno = contar(o => anoTexto(o));
+      document.getElementById('por-ano').innerHTML =
+        barras(Object.keys(porAno).sort().map(a => [a, porAno[a]]));
+
+      // Cada tela com o lado maior em escala: --L é o lado maior em cm
+      document.getElementById('escala').innerHTML = porArea.map(o => `
+        <button type="button" data-index="${obras.indexOf(o)}" aria-label="${o.titulo}, ${o.medidas} cm">
+          <img src="imagens/mini/${o.foto}.jpg" style="--L:${Math.max(...lados(o))};--mask:url('imagens/mini/${o.foto}-mask.png')" alt="" loading="lazy">
+          <small>${o.medidas}</small>
+        </button>`).join('');
+    }
+
+    document.getElementById('escala').addEventListener('click', e => {
+      const b = e.target.closest('button');
+      if (b) abrir(Number(b.dataset.index));
+    });
+
+    // ---------- Vistas (Obras / Sobre) ----------
+    function mudarVista() {
+      const vista = location.hash === '#sobre' ? 'sobre' : 'obras';
+      document.getElementById('vista-obras').hidden = vista !== 'obras';
+      document.getElementById('vista-sobre').hidden = vista !== 'sobre';
+      document.querySelectorAll('.topbar [data-vista]').forEach(a => {
+        if (a.dataset.vista === vista) a.setAttribute('aria-current', 'page');
+        else a.removeAttribute('aria-current');
+      });
+      window.scrollTo(0, 0);
+    }
+    window.addEventListener('hashchange', mudarVista);
+
+    // ---------- Arranque ----------
+    if (location.protocol === 'file:') document.documentElement.classList.add('local');
+    renderStats();
+    renderGaleria();
+    renderFiltros();
+    aplicarFiltro('Todos');
+    renderSobre();
+    mudarVista();
+  </script>
+</body>
+</html>
